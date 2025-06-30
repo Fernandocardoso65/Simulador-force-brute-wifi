@@ -1,0 +1,232 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Simulador Ataque Brute Force Wi-Fi</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #121212;
+            color: #eee;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            min-height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            margin-bottom: 5px;
+            color: #66ff66;
+            text-shadow: 0 0 8px #33cc33;
+        }
+        .container {
+            background: #222;
+            border-radius: 8px;
+            padding: 20px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 0 15px #33cc33aa;
+        }
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            background: #333;
+            color: #eee;
+        }
+        input::placeholder {
+            color: #aaa;
+        }
+        button {
+            margin-top: 15px;
+            width: 100%;
+            padding: 12px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #121212;
+            background-color: #66ff66;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #55cc55;
+        }
+        #stopBtn {
+            background-color: #ff6666;
+        }
+        #stopBtn:hover {
+            background-color: #cc5555;
+        }
+        .output {
+            margin-top: 25px;
+            background: #111;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            height: 200px;
+            overflow-y: auto;
+            box-shadow: inset 0 0 10px #33cc3399;
+            white-space: pre-wrap;
+            color: #99ff99;
+        }
+        .progress-bar-container {
+            margin-top: 15px;
+            width: 100%;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 20px;
+            box-shadow: inset 0 0 5px #33cc3399;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: #66ff66;
+            transition: width 0.2s ease;
+        }
+        .status {
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 1.1em;
+            text-align: center;
+            color: #66ff66;
+            text-shadow: 0 0 5px #33cc33;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simulador Ataque Brute Force Wi-Fi</h1>
+    <div class="container">
+        <label for="ssid">Nome da Rede (SSID):</label>
+        <input type="text" id="ssid" placeholder="Ex: MinhaWiFi" value="MinhaWiFi" />
+
+        <label for="password">Senha Alvo (8 caracteres):</label>
+        <input type="password" id="password" maxlength="8" placeholder="Digite a senha alvo" value="12345678" />
+
+        <button id="startBtn">Iniciar Ataque</button>
+        <button id="stopBtn" disabled>Parar Ataque</button>
+
+        <div class="progress-bar-container" aria-label="barra de progresso">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <div class="status" id="status"></div>
+
+        <pre class="output" id="output"></pre>
+    </div>
+
+    <script>
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const ssidInput = document.getElementById('ssid');
+        const passwordInput = document.getElementById('password');
+        const output = document.getElementById('output');
+        const progressBar = document.getElementById('progressBar');
+        const status = document.getElementById('status');
+
+        let isRunning = false;
+        let stopRequested = false;
+
+        function bruteForceSimulator(targetPassword, callbackProgress, callbackDone) {
+            let maxAttempts = 100000;
+            let attempts = 0;
+            let found = false;
+            let startTime = Date.now();
+
+            function padNum(num, size) {
+                let s = num + "";
+                while (s.length < size) s = "0" + s;
+                return s;
+            }
+
+            function tryNext() {
+                if (attempts >= maxAttempts || found || stopRequested) {
+                    callbackDone(found, attempts, Date.now() - startTime);
+                    return;
+                }
+
+                attempts++;
+                let attemptStr = padNum(attempts, targetPassword.length);
+
+                callbackProgress(attemptStr, attempts);
+
+                if (attemptStr === targetPassword) {
+                    found = true;
+                    callbackDone(found, attempts, Date.now() - startTime);
+                    return;
+                }
+
+                setTimeout(tryNext, 10);
+            }
+
+            tryNext();
+        }
+
+        startBtn.addEventListener('click', () => {
+            if (isRunning) return;
+
+            const ssid = ssidInput.value.trim();
+            let password = passwordInput.value.trim();
+
+            if (ssid.length === 0) {
+                alert('Por favor, digite o nome da rede (SSID).');
+                return;
+            }
+            if (password.length !== 8 || !/^[0-9]{8}$/.test(password)) {
+                alert('A senha deve conter exatamente 8 dígitos numéricos (0-9).');
+                return;
+            }
+
+            isRunning = true;
+            stopRequested = false;
+            output.textContent = "";
+            progressBar.style.width = "0%";
+            status.textContent = "Iniciando ataque brute force...";
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+
+            bruteForceSimulator(password, (attemptStr, attempts) => {
+                output.textContent = `Tentativa ${attempts}: ${attemptStr}`;
+                progressBar.style.width = `${(attempts / 100000) * 100}%`;
+                status.textContent = `Tentando senha: ${attemptStr} (tentativa ${attempts})`;
+            }, (found, attempts, timeMs) => {
+                if (stopRequested) {
+                    status.textContent = "Ataque interrompido pelo usuário.";
+                } else if (found) {
+                    status.textContent = `Senha encontrada! "${password}" em ${attempts} tentativas.`;
+                } else {
+                    status.textContent = `Ataque finalizado. Senha não encontrada em ${attempts} tentativas.`;
+                }
+                let timeSec = (timeMs / 1000).toFixed(2);
+                output.textContent += `
+
+Tempo decorrido: ${timeSec} segundos.`;
+                isRunning = false;
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+            });
+        });
+
+        stopBtn.addEventListener('click', () => {
+            if (isRunning) {
+                stopRequested = true;
+                stopBtn.disabled = true;
+            }
+        });
+    </script>
+</body>
+</html>
