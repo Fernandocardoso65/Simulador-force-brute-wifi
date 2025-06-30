@@ -34,6 +34,7 @@ Este é um projeto **educativo em HTML, CSS e JavaScript** que simula um ataque 
    - O botão **"Parar Ataque"** é clicado
    - 100.000 tentativas são atingidas (limite da simulação)
 
+![image](https://github.com/user-attachments/assets/ba373a36-60c4-4da5-9a98-cbaaaf7a8c49)
 
 
 ## Tecnologias usadas
